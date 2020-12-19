@@ -117,7 +117,7 @@ def dump_gru_layer(self, f, hf):
     name = self.name
     print("printing layer " + name + " of type " + self.__class__.__name__)
     weights = self.get_weights()
-    printVector(f, weights[0], name + '_weights')
+    printVector(f, weights[0][:model.rnn_units1,:], name + '_gruAout_weights')
     printVector(f, weights[1], name + '_recurrent_weights')
     printVector(f, weights[-1], name + '_bias')
     if hasattr(self, 'activation'):
@@ -130,7 +130,7 @@ def dump_gru_layer(self, f, hf):
         reset_after = 1
     neurons = weights[0].shape[1]//3
     max_rnn_neurons = max(max_rnn_neurons, neurons)
-    f.write('const GRULayer {} = {{\n   {}_bias,\n   {}_weights,\n   {}_recurrent_weights,\n   {}, {}, ACTIVATION_{}, {}\n}};\n\n'
+    f.write('const GRULayer {} = {{\n   {}_bias,\n   {}_gruAout_weights,\n   {}_recurrent_weights,\n   {}, {}, ACTIVATION_{}, {}\n}};\n\n'
             .format(name, name, name, name, weights[0].shape[0], weights[0].shape[1]//3, activation, reset_after))
     hf.write('#define {}_OUT_SIZE {}\n'.format(name.upper(), weights[0].shape[1]//3))
     hf.write('#define {}_STATE_SIZE {}\n'.format(name.upper(), weights[0].shape[1]//3))
@@ -246,6 +246,10 @@ W = model.get_layer('gru_a').get_weights()[0][3*embed_size:,:]
 #FIXME: dump only half the biases
 b = model.get_layer('gru_a').get_weights()[2]
 dump_dense_layer_impl('gru_a_dense_feature', W, b, 'LINEAR', f, hf)
+W = model.get_layer('gru_b').get_weights()[0][model.rnn_units1:,:]
+b = model.get_layer('gru_b').get_weights()[2]
+dump_dense_layer_impl('gru_b_dense_feature', W, b, 'LINEAR', f, hf)
+
 
 layer_list = []
 for i, layer in enumerate(model.layers):
