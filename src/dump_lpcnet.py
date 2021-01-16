@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 '''Copyright (c) 2017-2018 Mozilla
 
    Redistribution and use in source and binary forms, with or without
@@ -68,16 +68,24 @@ def printSparseVector(f, A, name):
     A[:,2*N:] = A[:,2*N:] - np.diag(np.diag(A[:,2*N:]))
     printVector(f, diag, name + '_diag')
     idx = np.zeros((0,), dtype='int')
+    cols = np.zeros((0,), dtype='int') # add
+    offset_w, offset_idx = 0, 3*3*N//16  # add
     for i in range(3*N//16):
         pos = idx.shape[0]
-        idx = np.append(idx, -1)
+        # idx = np.append(idx, -1) # del
         nb_nonzero = 0
         for j in range(N):
             if np.sum(np.abs(A[j, i*16:(i+1)*16])) > 1e-10:
                 nb_nonzero = nb_nonzero + 1
                 idx = np.append(idx, j)
                 W = np.concatenate([W, A[j, i*16:(i+1)*16]])
-        idx[pos] = nb_nonzero
+        # idx[pos] = nb_nonzero # del
+        cols = np.append(cols, nb_nonzero) # add
+        cols = np.append(cols, offset_w) # add
+        cols = np.append(cols, offset_idx) # add
+        offset_w += nb_nonzero*16 # add
+        offset_idx += nb_nonzero # add
+    idx = np.append(cols, idx) # add
     printVector(f, W, name)
     #idx = np.tile(np.concatenate([np.array([N]), np.arange(N)]), 3*N//16)
     printVector(f, idx, name + '_idx', dtype='int')
@@ -208,8 +216,13 @@ def dump_embedding_layer(self, f, hf):
     return False
 Embedding.dump_layer = dump_embedding_layer
 
-
-model, _, _ = lpcnet.new_lpcnet_model(rnn_units1=384, use_gpu=False)
+N_a = 1024
+N_a = 896
+#N_a = 768
+#N_a = 640
+#N_a = 384
+#N_a = 192
+model, _, _ = lpcnet.new_lpcnet_model(rnn_units1=N_a, use_gpu=False)
 model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['sparse_categorical_accuracy'])
 #model.summary()
 
