@@ -30,7 +30,18 @@ no vectorization will take place and the code will be very slow. On a recent x86
 ```
 export CFLAGS='-O3 -g -mavx2 -mfma'
 ```
-should work. On ARM, you can enable Neon with:
+should work. On older Intel Core and AMD Ryzen CPUs, try:
+```
+export CFLAGS='-O3 -g -mavx'
+```
+On recent Celeron and Atom CPUs (or older CPUs in general), use:
+export CFLAGS='-O3 -g -msse4.2'
+```
+and on older x86 CPUs, use:
+```
+export CFLAGS='-O3 -g -mssse3'
+```
+On ARM, you can enable Neon with:
 ```
 export CFLAGS='-O3 -g -mfpu=neon'
 ```

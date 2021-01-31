@@ -55,7 +55,7 @@
 #ifdef __GNUC__
 __attribute__((noreturn))
 #endif
-static OPUS_INLINE void _celt_fatal(const char *str, const char *file, int line)
+static inline void _celt_fatal(const char *str, const char *file, int line)
 {
    fprintf (stderr, "Fatal (internal) error in %s, line %d: %s\n", file, line, str);
    abort();
@@ -121,7 +121,7 @@ typedef opus_val32 celt_ener;
 #define ABS16(x) ((x) < 0 ? (-(x)) : (x))
 #define ABS32(x) ((x) < 0 ? (-(x)) : (x))
 
-static OPUS_INLINE opus_int16 SAT16(opus_int32 x) {
+static inline opus_int16 SAT16(opus_int32 x) {
    return x > 32767 ? 32767 : x < -32768 ? -32768 : (opus_int16)x;
 }
 
@@ -156,6 +156,26 @@ typedef float opus_val64;
 typedef float celt_sig;
 typedef float celt_norm;
 typedef float celt_ener;
+
+#ifdef __FAST_MATH__
+#define FLOAT_APPROX
+#endif
+
+#ifdef FLOAT_APPROX
+/* This code should reliably detect NaN/inf even when -ffast-math is used.
+   Assumes IEEE 754 format. */
+static inline int celt_isnan(float x)
+{
+   union {float f; opus_uint32 i;} in;
+   in.f = x;
+   return ((in.i>>23)&0xFF)==0xFF && (in.i&0x007FFFFF)!=0;
+}
+#else
+#ifdef __FAST_MATH__
+#error Cannot build libopus with -ffast-math unless FLOAT_APPROX is defined. This could result in crashes on extreme (e.g. NaN) input
+#endif
+#define celt_isnan(x) ((x)!=(x))
+#endif
 
 #define Q15ONE 1.0f
 

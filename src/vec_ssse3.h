@@ -26,13 +26,23 @@
    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-/* NEON support for ARM machines */
+/* SSSE3 with optional SSE 4.2 support using ARM_NEON_2_X86 Intel converter
+   Original code extracted from vec_neon.h */
 
-#include <arm_neon.h>
 
+#ifdef __SSE4_2__
+#define USE_SSE4
+#endif
+
+// comment this line to see the code-paths which need optimization...
+#define NEON2SSE_DISABLE_PERFORMANCE_WARNING
+
+#include "NEON_2_SSE.h"
+
+#ifdef __SSSE3__
 
 #ifndef LPCNET_TEST
-static inline OPUS_INLINE float32x4_t exp4_approx(float32x4_t x) {
+static inline float32x4_t exp4_approx(float32x4_t x) {
   int32x4_t i;
   float32x4_t xf;
 
@@ -131,10 +141,9 @@ static inline void sgemv_accum16(float *out, const float *weights, int rows, int
     int i, j;
     for (i=0;i<rows;i+=16)
     {
-	float * restrict y = &out[i];
-      
-	/* keep y[0..15] in registers for duration of inner loop */
-      
+        float * restrict y = &out[i];
+
+        /* keep y[0..15] in registers for duration of inner loop */
 	float32x4_t y0_3 = vld1q_f32(&y[0]);
 	float32x4_t y4_7 = vld1q_f32(&y[4]);
 	float32x4_t y8_11 = vld1q_f32(&y[8]);
@@ -209,3 +218,5 @@ static inline void sparse_sgemv_accum16(float *out, const float *w, int rows, co
       
     }
 }
+
+#endif
